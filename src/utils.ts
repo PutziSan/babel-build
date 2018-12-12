@@ -1,6 +1,8 @@
 import * as bluebird from 'bluebird';
 import * as fs from "fs";
-import { dirname, relative } from "path";
+import { dirname, extname, relative } from 'path';
+import * as mkdirp from 'mkdirp';
+import { outPath } from './paths';
 
 export function either(a: (val: any) => boolean, b: (val: any) => boolean) {
   return (val: any) => {
@@ -51,4 +53,52 @@ export function fatalWrite(path: string, content: string) {
       console.trace(error);
       process.exit(1);
     })
+}
+
+export function toJsExt(path: string) {
+  const ext = extname(path);
+
+  if (ext !== ".js") {
+    return path.substr(0, path.length - ext.length) + ".js";
+  }
+  return path;
+}
+
+export const mkdirP = bluebird.promisify<void, string>(mkdirp);
+
+type OnReady = (fn: () => void) => void;
+type AddToQueue = (promise: Promise<any>) => void;
+
+export function newPromiseQueue(): [OnReady, AddToQueue] {
+  let isReady = false;
+  let called = false;
+  const promiseQueue: Promise<any>[] = [];
+  const callbacks: (() => void)[] = [];
+
+  async function checkIsReady() {
+    if (isReady) {
+      return;
+    }
+
+    const currentQueue = promiseQueue.slice();
+    await Promise.all(currentQueue);
+
+    isReady = currentQueue.length === promiseQueue.length;
+
+    if (isReady && !called) {
+      called = true;
+      callbacks.forEach(callback => callback());
+    }
+  }
+
+  const onReady = (fn: () => void) => {
+    callbacks.push(fn);
+  };
+
+  const addToQueue = (promise: Promise<any>) => {
+    promiseQueue.push(promise);
+    promise.then(checkIsReady);
+  };
+
+  return [onReady, addToQueue];
 }

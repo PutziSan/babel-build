@@ -46,6 +46,4 @@ declare module '@babel/core' {
 
 declare module '@babel/plugin-syntax-dynamic-import';
 
-declare module '@babel/template';
-
 declare module 'mkdirp';

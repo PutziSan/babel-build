@@ -1,41 +1,40 @@
 {
   "name": "babel-plugin",
   "version": "1.0.0",
-  "main": "index.js",
+  "bin": "dist/cmd.js",
+  "main": "dist/dev-server.js",
   "author": "PS",
   "license": "MIT",
   "scripts": {
     "dev": "tsc --watch",
-    "test-start": "node dist/builder.js"
+    "test-start": "node dist/dev-server.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.2.0",
-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/plugin-transform-react-jsx": "^7.2.0",
-    "@babel/template": "^7.1.2",
-    "@babel/traverse": "^7.1.6",
     "@babel/types": "^7.2.0",
     "@types/babel-core": "^6.25.5",
     "@types/bluebird": "^3.5.24",
     "@types/browser-sync": "^0.0.42",
     "@types/cheerio": "^0.22.10",
     "@types/chokidar": "^1.7.5",
-    "@types/htmlparser2": "^3.7.31",
+    "@types/fs-extra": "^5.0.4",
     "@types/node": "^10.12.12",
-    "@types/parse5": "^5.0.0",
     "@types/rimraf": "^2.0.2",
-    "bluebird": "^3.5.3",
-    "chokidar": "^2.0.4",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.17.0",
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "@babel/core": "^7.2.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/traverse": "^7.1.6",
+    "bluebird": "^3.5.3",
     "browser-sync": "^2.26.3",
     "cheerio": "^1.0.0-rc.2",
-    "htmlparser2": "^3.10.0",
+    "chokidar": "^2.0.4",
+    "commander": "^2.19.0",
+    "fs-extra": "^7.0.1",
     "mkdirp": "^0.5.1",
-    "parse5": "^5.1.0",
     "preact": "^8.4.2",
     "rimraf": "^2.6.2"
   }
