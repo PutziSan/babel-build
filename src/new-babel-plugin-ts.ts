@@ -1,5 +1,5 @@
-import pluginSyntaxDynamicImport from '@babel/plugin-syntax-dynamic-import';
-import { NodePath } from '@babel/traverse';
+import pluginSyntaxDynamicImport from "@babel/plugin-syntax-dynamic-import";
+import { NodePath } from "@babel/traverse";
 import {
   CallExpression,
   callExpression,
@@ -11,11 +11,10 @@ import {
   isImportSpecifier,
   isStringLiteral,
   isTemplateLiteral,
-  stringLiteral,
-} from '@babel/types';
-import { ImportInfo, ModuleInfo } from './customTypes';
-import { either } from './utils';
-
+  stringLiteral
+} from "@babel/types";
+import { ImportInfo, ModuleInfo } from "./customTypes";
+import { either } from "./utils";
 
 function getImportPathFromImportCall(importCall: CallExpression) {
   const [importPathNode] = importCall.arguments;
@@ -37,13 +36,12 @@ function getImportPathFromImportCall(importCall: CallExpression) {
 
 interface PluginMethods {
   onNewImport(importInfo: ImportInfo): void;
-  newImportPath(moduleInfo: ModuleInfo, importedPath: string): string;
   moduleInfoFromPath(importedPath: string): ModuleInfo;
 }
 
+// Es ist wichtig dass `newImportPath` nach n (n ist eine Natürlich Zahl) zyklischen aufrufen Aufrufen mit sich selbst terminiert
 export function createPlugin({
   onNewImport,
-  newImportPath,
   moduleInfoFromPath
 }: PluginMethods) {
   return () => {
@@ -62,20 +60,21 @@ export function createPlugin({
         const importedPath = node.source.value;
         const moduleInfo = moduleInfoFromPath(importedPath);
 
-        const newSrc = newImportPath(moduleInfo, importedPath);
+        onNewImport({
+          importedAll,
+          importedPath,
+          newImportPath: moduleInfo.relativeJsImportPath,
+          importedSpecifiers,
+          moduleInfo
+        });
+
+        const newSrc = moduleInfo.relativeJsImportPath;
 
         if (newSrc !== importedPath) {
           path.replaceWith(
             importDeclaration(node.specifiers, stringLiteral(newSrc))
           );
         }
-
-        onNewImport({
-          importedAll,
-          importedPath,
-          importedSpecifiers,
-          moduleInfo
-        });
       },
       Import(path: NodePath) {
         const importCallExpression = path.parentPath.node as CallExpression;
@@ -83,21 +82,26 @@ export function createPlugin({
         const importedPath = getImportPathFromImportCall(importCallExpression);
         const moduleInfo = moduleInfoFromPath(importedPath);
 
-        const newSrc = newImportPath(moduleInfo, importedPath);
+        const newSrc = moduleInfo.relativeJsImportPath;
 
+        // call event before replacing, so that outer handlers can cache handled imports
+        onNewImport({
+          importedPath,
+          moduleInfo,
+          newImportPath: moduleInfo.relativeJsImportPath,
+          // set always true for dynamic import
+          importedAll: true,
+          importedSpecifiers: []
+        });
+
+        // diese bedingung ist wichtig und gefährlich:
+        // durch das replacement wird der babel-traversal `Import(path)` immer wieder aufgerufen
+        // `newImportPath` sollte nach n zyklischen aufrufen mit sich selbst irgendwann deterministisch sein und kein geändertes ergebnis mehr bringen
         if (newSrc !== importedPath) {
           path.parentPath.replaceWith(
             callExpression(importCallExpression.callee, [stringLiteral(newSrc)])
           );
         }
-
-        onNewImport({
-          importedPath,
-          moduleInfo,
-          // set always true for dynamic import
-          importedAll: true,
-          importedSpecifiers: [],
-        });
       }
     };
 

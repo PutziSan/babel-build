@@ -4,7 +4,6 @@ export enum ModuleType {
 }
 
 export interface PackageInfo {
-  type: ModuleType.nodeModule;
   // path to the directory of the node-package
   path: string;
   // path to the default export (for modules)
@@ -12,13 +11,16 @@ export interface PackageInfo {
   packageName: string;
 }
 
-export interface NodeModuleInfo extends PackageInfo{
+export interface NodeModuleInfo extends PackageInfo {
+  type: ModuleType.nodeModule;
   filePath: string;
+  relativeJsImportPath: string;
 }
 
 export interface CustomModuleInfo {
   type: ModuleType.customModule;
   filePath: string;
+  relativeJsImportPath: string;
 }
 
 export type ModuleInfo = NodeModuleInfo | CustomModuleInfo;
@@ -26,6 +28,13 @@ export type ModuleInfo = NodeModuleInfo | CustomModuleInfo;
 export interface ImportInfo {
   moduleInfo: ModuleInfo;
   importedPath: string;
+  newImportPath: string;
   importedSpecifiers: string[];
   importedAll: boolean;
+}
+
+export interface SrcEvents {
+  onNewSrc(path: string): void;
+  onUnlink(path: string): void;
+  onChange(outputPath: string): void;
 }
