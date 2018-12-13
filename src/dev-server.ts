@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import * as bluebird from "bluebird";
 import * as browserSync from "browser-sync";
 import { extname, join } from "path";
@@ -17,6 +18,7 @@ async function start() {
   await mkdirP(outPath);
 
   const packageInfos = await loadPackageInfos();
+  console.log(packageInfos);
 
   const done: { [key: string]: boolean } = {};
 

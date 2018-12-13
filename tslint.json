@@ -11,6 +11,8 @@
     "member-ordering": false,
     "no-var-requires": false,
     "array-type": false,
+    "no-submodule-imports": false,
+    "ordered-imports": false,
     "import/extensions": ["error", "always", { "ignorePackages": true }]
   }
 }

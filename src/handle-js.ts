@@ -62,7 +62,13 @@ function importedIsPackage(importedPath: string, packageName: string) {
     return true;
   }
 
-  if (importedPath.split("/")[0] === packageName) {
+  const pkgNameLen = packageName.length;
+
+  if (
+    // check for importing submodules like: `import Button from '@material-ui/core/Button';`
+    importedPath.substr(0, pkgNameLen) === packageName &&
+    importedPath.charAt(pkgNameLen) === "/"
+  ) {
     return true;
   }
 
