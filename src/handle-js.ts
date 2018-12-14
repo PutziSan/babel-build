@@ -135,5 +135,8 @@ export async function handleJs(
       onUnlink(path);
     });
 
-  return babelify().catch(console.trace);
+  return babelify().catch((e)=> {
+    console.log('HaALLLOOO');
+    console.error(e);
+  });
 }

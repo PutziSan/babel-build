@@ -1,6 +1,5 @@
 import 'source-map-support/register';
 import * as bluebird from "bluebird";
-import * as browserSync from "browser-sync";
 import { extname, join } from "path";
 import { SrcEvents } from "./customTypes";
 import { handleHtml } from "./handle-html";
@@ -12,12 +11,11 @@ import { mkdirP, newPromiseQueue } from "./utils";
 const rimraf = bluebird.promisify<void, string>(require("rimraf"));
 
 async function start() {
-  const bs = browserSync.create();
-
   await rimraf(outPath);
   await mkdirP(outPath);
 
   const packageInfos = await loadPackageInfos();
+  console.log(packageInfos);
 
   const done: { [key: string]: boolean } = {};
 
@@ -27,7 +25,6 @@ async function start() {
 
   onReady(() => {
     isReady = true;
-    bs.init({ server: outPath });
     console.timeEnd("start");
   });
 
@@ -38,7 +35,6 @@ async function start() {
 
   function handleChange(outputPath: string) {
     if (isReady) {
-      bs.reload(outputPath);
     }
   }
 
@@ -75,9 +71,6 @@ async function start() {
           })
         );
         break;
-        default:
-          console.log(`unkown ext ${ext}, path: ${path}`);
-          break;
     }
   }
 

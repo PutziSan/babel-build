@@ -1,8 +1,12 @@
-const chokidar = require("chokidar");
+const dependencyTree = require("dependency-tree");
 const path = require("path");
 
-chokidar.watch(path.join(__dirname, "test-src")).on("all", (event, evPath) => {
-  console.log(path.relative(path.join(__dirname, 'test-src'), evPath));
+console.log(dependencyTree({
+  filename: path.join(__dirname, "test-src", "index.js"),
+  directory: path.join(__dirname, "test-src")
+}));
 
-  console.log(event, evPath);
-});
+console.log(dependencyTree.toList({
+  filename: path.join(__dirname, "test-src", "index.js"),
+  directory: path.join(__dirname, "test-src")
+}));
