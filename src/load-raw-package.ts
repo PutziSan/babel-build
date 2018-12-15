@@ -80,6 +80,7 @@ async function loadRawPackage(startUrl: string, dist: string) {
 
     onNewImport(handleNewImport);
 
+    // TODO eigentlich wäre es wohl cooler, wenn man es zu validem ES6 transformiert
     const { code } = await transform(data, {
       configFile: false,
       babelrc: false,
