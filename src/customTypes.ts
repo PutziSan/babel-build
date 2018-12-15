@@ -25,7 +25,7 @@ export interface CustomModuleInfo {
 
 export type ModuleInfo = NodeModuleInfo | CustomModuleInfo;
 
-export interface ImportInfo {
+export interface NewImportInfo {
   moduleInfo: ModuleInfo;
   importedPath: string;
   newImportPath: string;

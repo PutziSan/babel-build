@@ -20,7 +20,7 @@ import {
   isTemplateLiteral,
   stringLiteral,
 } from '@babel/types';
-import { ImportInfo, ModuleInfo } from "./customTypes";
+import { NewImportInfo, ModuleInfo } from "./customTypes";
 import { either } from "./utils";
 
 function getImportPathFromImportCall(importCall: CallExpression) {
@@ -42,7 +42,7 @@ function getImportPathFromImportCall(importCall: CallExpression) {
 }
 
 interface PluginMethods {
-  onNewImport(importInfo: ImportInfo): void;
+  onNewImport(importInfo: NewImportInfo): void;
   moduleInfoFromPath(importedPath: string): ModuleInfo;
 }
 
@@ -81,6 +81,21 @@ export function createPlugin({
           importDeclaration(node.specifiers, stringLiteral(newSrc))
         );
       }
+    },
+    ExportAllDeclaration(path: NodePath) {
+      const node = path.node as ExportAllDeclaration;
+
+      const importedPath = node.source.value;
+      const moduleInfo = moduleInfoFromPath(importedPath);
+
+      onNewImport({
+        importedAll,
+        importedPath,
+        newImportPath: moduleInfo.relativeJsImportPath,
+        importedSpecifiers,
+        moduleInfo
+      })
+
     },
     ExportNamedDeclaration(path: NodePath) {
       const node = path.node as ExportNamedDeclaration;

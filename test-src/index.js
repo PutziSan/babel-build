@@ -1,4 +1,5 @@
 import { h, render } from "preact";
+import { h, render } from "preact";
 import { TestComponent } from "./TestComponent.js";
 import { add } from 'lodash-es';
 import('./test-dynamic-import.js').then(({ hi }) => console.log(hi));

@@ -3,3 +3,4 @@ node_modules
 dist
 .out
 .firebase
+.copied_node_modules

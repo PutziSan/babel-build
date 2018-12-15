@@ -45,5 +45,7 @@ declare module '@babel/core' {
 }
 
 declare module '@babel/plugin-syntax-dynamic-import';
+declare module '@babel/plugin-syntax-jsx';
+declare module '@babel/plugin-syntax-class-properties';
 
 declare module 'mkdirp';

@@ -1,8 +1,9 @@
-import * as bluebird from 'bluebird';
+import * as bluebird from "bluebird";
 import * as fs from "fs";
-import { dirname, extname, relative } from 'path';
-import * as mkdirp from 'mkdirp';
-import { outPath } from './paths';
+import { get } from "https";
+import * as mkdirp from "mkdirp";
+import { extname, relative } from "path";
+import { StringDecoder } from "string_decoder";
 
 export function either(a: (val: any) => boolean, b: (val: any) => boolean) {
   return (val: any) => {
@@ -48,11 +49,10 @@ export function createMemo() {
 const writeFile = bluebird.promisify<void, string, string>(fs.writeFile as any);
 
 export function fatalWrite(path: string, content: string) {
-  return writeFile(path, content)
-    .catch(error => {
-      console.trace(error);
-      process.exit(1);
-    })
+  return writeFile(path, content).catch(error => {
+    console.trace(error);
+    process.exit(1);
+  });
 }
 
 export function toJsExt(path: string) {
@@ -101,4 +101,50 @@ export function newPromiseQueue(): [OnReady, AddToQueue] {
   };
 
   return [onReady, addToQueue];
+}
+
+type Subscriber<T extends any[]> = (...params: T) => void;
+
+export function createNewEvent<T extends any[]>(): [
+  (subscriber: Subscriber<T>) => void,
+  (...vals: T) => void
+] {
+  const subscribers: Subscriber<T>[] = [];
+
+  const fireEvent = (...vals: T) => {
+    subscribers.forEach(subscriber => {
+      subscriber(...vals);
+    });
+  };
+
+  const onEvent = (subscriber: Subscriber<T>) => {
+    subscribers.push(subscriber);
+  };
+
+  return [onEvent, fireEvent];
+}
+
+interface GetResult {
+  data: string;
+  statusCode: number;
+}
+
+export function GET(url: string): Promise<GetResult> {
+  return new Promise((resolve, reject) => {
+    const decoder = new StringDecoder("utf8");
+    let res = "";
+
+    get(url, response => {
+      response.on("data", data => {
+        res += decoder.write(data);
+      });
+
+      response.on("end", () => {
+        resolve({ data: res, statusCode: response.statusCode });
+        decoder.end();
+      });
+
+      response.on("error", reject);
+    });
+  });
 }

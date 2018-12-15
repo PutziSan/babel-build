@@ -1,20 +1,18 @@
 import * as babelCore from "@babel/core";
+import { TransformOptions } from "@babel/core";
 import * as bluebird from "bluebird";
-import { watch } from "chokidar";
-import { unlink } from "fs-extra";
 import { dirname, join, relative, resolve } from "path";
 import {
   CustomModuleInfo,
-  ImportInfo,
+  NewImportInfo,
   ModuleInfo,
   ModuleType,
   NodeModuleInfo,
-  PackageInfo,
-  SrcEvents
+  PackageInfo
 } from "./customTypes";
 import { createPlugin } from "./new-babel-plugin-ts";
 import { nodeModulesPath, outPath, rootPath } from "./paths";
-import { createMemo, fatalWrite, slash, toJsExt, urlRelative } from "./utils";
+import { createMemo, createNewEvent, toJsExt, urlRelative } from "./utils";
 
 const transformFile = bluebird.promisify(babelCore.transformFile);
 const mkdirP = bluebird.promisify<void, string>(require("mkdirp"));
@@ -84,10 +82,12 @@ function isPackageForPath(importedPath: string) {
 export async function handleJs(
   packageInfos: PackageInfo[],
   path: string,
-  { onNewSrc, onUnlink, onChange }: SrcEvents
+  transformOptions: TransformOptions
 ) {
   const outputPath = toJsExt(join(outPath, relative(rootPath, path)));
   await mkdirP(dirname(outputPath));
+
+  const [onNewSrc, fireNewSrc] = createNewEvent<[string]>();
 
   function moduleInfoFromPath(importedPath: string): ModuleInfo {
     const packageInfo = packageInfos.find(isPackageForPath(importedPath));
@@ -99,24 +99,29 @@ export async function handleJs(
 
   const isKnown = createMemo();
 
-  function handleNewImport(importInfo: ImportInfo) {
+  function handleNewImport(importInfo: NewImportInfo) {
     // das wird doppelt aufgerufen, da `replacePath` im babel-plugin ein neues import-node hinzufügt
     // und für dieses import-node wird erneut in den plugin-visitor gegangen wodurch es auch wieder handleNewImport aufruft
     // da wir die umgeschriebenen imports aber nicht beobachten oder händeln wollen, werden sie ignoriert
     if (isKnown(importInfo.importedPath, importInfo.newImportPath)) {
       return;
     }
-    onNewSrc(importInfo.moduleInfo.filePath);
+    fireNewSrc(importInfo.moduleInfo.filePath);
   }
 
   const transformOpts = {
+    ...transformOptions,
     plugins: [
+      ...transformOptions.plugins,
       createPlugin({ moduleInfoFromPath, onNewImport: handleNewImport })
-    ],
-    sourceMaps: "inline"
+    ]
   };
 
-  const babelify = async () => {
+  return [() => transformFile(path, transformOpts), { onNewSrc }];
+}
+
+/*
+ const babelify = async () => {
     const { code } = await transformFile(path, transformOpts);
 
     console.log(`write to ${outputPath}`);
@@ -125,8 +130,7 @@ export async function handleJs(
 
     onChange(outputPath);
   };
-
-  // umschreiben zu relativen pfaden als slash, da es bei win10 teilweise probleme  gibt sonst:
+ // umschreiben zu relativen pfaden als slash, da es bei win10 teilweise probleme  gibt sonst:
   // zb https://github.com/paulmillr/chokidar/issues/668
   watch(slash(relative(rootPath, path)), { disableGlobbing: true })
     .on("change", babelify)
@@ -134,9 +138,4 @@ export async function handleJs(
       unlink(outputPath).catch(error => console.trace(error));
       onUnlink(path);
     });
-
-  return babelify().catch((e)=> {
-    console.log('HaALLLOOO');
-    console.error(e);
-  });
-}
+ */
